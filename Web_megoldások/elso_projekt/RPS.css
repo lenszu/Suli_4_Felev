@@ -1,0 +1,64 @@
+/* thi is the css style file for the RPS.html */
+
+body {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#container {
+    background-color: #000000;
+    width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#header {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+}
+
+#content {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+}
+
+#footer {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+}
+
+#nav {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+}
+
+#nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+

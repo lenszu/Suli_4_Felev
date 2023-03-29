@@ -1,0 +1,147 @@
+<!-- i want to make a rock paper a scissors game in html with javascript -->
+<!-- i want to style it with css, but in the html  -->
+<!-- i want to make it so that when you click on the rock paper or scissors it will show the result -->
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+    <link rel="stylesheet" href="RPS.css">
+</head>
+<!-- make the buttons to the center -->
+<!-- i want to make the body looks like: 3 buttons and 2 counters -->
+<!-- the 3 buttons: rock, paper, scissors -->
+<!-- the 2 counters: user points, computer points -->
+<!-- i want to make the buttons to be in the center -->
+<!-- the user chooses from the buttons directly, and the computer chooses from the buttons randomly -->
+<!-- when the user chose, a pop-up message should appear with what the computer chose, and what the user chose -->
+<!-- i want this code to be written using javascript -->
+<style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .buttons {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .buttons button {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: #f1f1f1;
+        border: 1px solid #ccc;
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        cursor: pointer;
+    }
+
+    .counters {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .counters div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .counters div h2 {
+        font-size: 20px;
+        font-weight: bold;
+        color: #f1f1f1;
+    }
+
+    .counters div h3 {
+        font-size: 40px;
+        font-weight: bold;
+        color: #f1f1f1;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div class="buttons">
+            <button id="rock">Rock</button>
+            <button id="paper">Paper</button>
+            <button id="scissors">Scissors</button>
+        </div>
+        <div class="counters">
+            <div>
+                <h2>User</h2>
+                <h3 id="user">0</h3>
+            </div>
+            <div>
+                <h2>Computer</h2>
+                <h3 id="computer">0</h3>
+            </div>
+        </div>
+    </div>
+    <script>
+        const rock = document.getElementById('rock');
+        const paper = document.getElementById('paper');
+        const scissors = document.getElementById('scissors');
+        const user = document.getElementById('user');
+        const computer = document.getElementById('computer');
+        let userScore = 0;
+        let computerScore = 0;
+        rock.addEventListener('click', () => {
+            const computerChoice = Math.floor(Math.random() * 3);
+            if (computerChoice === 0) {
+                alert('Computer chose rock. It\'s a tie!');
+            } else if (computerChoice === 1) {
+                alert('Computer chose paper. You lose!');
+                computerScore++;
+                computer.innerHTML = computerScore;
+            } else {
+                alert('Computer chose scissors. You win!');
+                userScore++;
+                user.innerHTML = userScore;
+            }
+        });
+        paper.addEventListener('click', () => {
+            const computerChoice = Math.floor(Math.random() * 3);
+            if (computerChoice === 0) {
+                alert('Computer chose rock. You win!');
+                userScore++;
+                user.innerHTML = userScore;
+            } else if (computerChoice === 1) {
+                alert('Computer chose paper. It\'s a tie!');
+            } else {
+                alert('Computer chose scissors. You lose!');
+                computerScore++;
+                computer.innerHTML = computerScore;
+            }
+        });
+        scissors.addEventListener('click', () => {
+            const computerChoice = Math.floor(Math.random() * 3);
+            if (computerChoice === 0) {
+                alert('Computer chose rock. You lose!');
+                computerScore++;
+                computer.innerHTML = computerScore;
+            } else if (computerChoice === 1) {
+                alert('Computer chose paper. You win!');
+                userScore++;
+                user.innerHTML = userScore;
+            } else {
+                alert('Computer chose scissors. It\'s a tie!');
+            }
+        });
+    </script>
+</body>
+
+
+
+
+</html>
