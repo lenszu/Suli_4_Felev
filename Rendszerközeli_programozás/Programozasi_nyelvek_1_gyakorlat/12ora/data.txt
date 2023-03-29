@@ -1,0 +1,6 @@
+Bela:19:0
+Zoli:20:0
+Akos:21:0
+Guszti:30:0
+Angela:22:1
+Dora:20:1
