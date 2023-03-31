@@ -1,3 +1,4 @@
+#include "Functions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,29 +9,46 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <signal.h>
 
-// 4. feladat
-// 1. lépés
-// Írj egy függvényt, amely a Linux fájlrendszer gyökerében lévő ”/proc” könyvtárnak az
-// alkönyvtáraiban található ”status” nevű fájloknak a tartalmát vizsgálja meg. (Azok az alkönyvtárak
-// tartalmaznak ilyen fájlokat, amelyek neve számjegy karakterrel kezdődik.) A fájl első sorának a
-// formátuma: ”Name:\t%s\n”. Ha a tabulátor és az újsor karakter között a ”bash”
-// karaktersorozatot található, akkor keressen az adott fájlban olyan sort, amely a ”Pid:\t” sztriggel
-// kezdődik majd ezt egy egész szám követi. A függvény térjen vissza ezzel az egész számmal, ha pedig
-// egyáltalán nem talál ilyen fájlt egyik alkönyvtárban sem, akkora -1 értékkel! (Persze a megnyitott
-// fájlokat és könyvtárakat zárja be!) A függvény fejléce legyen a következő:
-// int FindPID();
-// 2. lépés
-// Ideiglenes tesztként hívd meg a FindPID függvényt a főprogramban és ellenőrizd le manuálisan a
-// megtalált érték helyességét! (A végső verziónak nem kell tartalmaznia ezt a tesztet.)
-// 3. lépés
-// A programban eddig definiált (és a jövőben definiálandó) alprogramokat szervezd ki egy külön saját,
-// ”.h” kiterjesztésű header állományba, amit a main függvény forráskódjában inkludálsz is!
+#define MAX_BUFFER_SIZE 100
 
-int main(int argc, char *argv[])
+void ReceiveViaFile(int sig)
 {
-    int pid = FindPID();
-    printf("PID: %d \t", pid);
-    
-    return 0;
+    FILE *f; // fájlkezelő
+    chdir(getenv("HOME")); // home könyvtárba lépés
+    f = fopen("Measurement.txt", "r"); // fájl megnyitása olvasásra
+    char *buffer=malloc(MAX_BUFFER_SIZE*sizeof(char)); // buffer létrehozása
+    int *Values=malloc(1*sizeof(int)); // tömb létrehozása
+    int index=0; // index létrehozása
+
+    while (fgets(buffer,MAX_BUFFER_SIZE,f)!=NULL) // fájl beolvasása soronként és a bufferbe mentése
+    {
+        // printf("%s",buffer);
+        Values[index]=atoi(buffer); // bufferből számot készítés
+        index++; // index növelése
+        Values=realloc(Values,(index+1)*sizeof(int)); // tömb átméretezése
+        printf("%d\n",Values[index-1]); // kiíratás
+    }
+    BMPcreator(Values,index); // BMP létrehozása
+    fclose(f); // fájl bezárása
+    free(buffer); // buffer felszabadítása
+}
+int main()
+{
+    // // 10 elemü tömb létrehozása
+    // int *tomb = malloc(10 * sizeof(int));
+    // // tömb feltöltése
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     tomb[i] = i;
+    // }
+    // // tömb mérete
+    // int hossz = 10;
+
+    // SendViaFile(&tomb[0], hossz);
+    ReceiveViaFile(1);
+
 }

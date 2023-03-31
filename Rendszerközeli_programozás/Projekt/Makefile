@@ -1,4 +1,4 @@
 target:
 		clear
-		gcc Projekt.c -o chart
+		gcc Projekt.c Functions.h Functions.c -o chart 
 		./chart
