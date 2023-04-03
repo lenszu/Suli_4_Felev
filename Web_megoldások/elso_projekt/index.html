@@ -1,6 +1,3 @@
-<!-- i want to make a rock paper a scissors game in html with javascript -->
-<!-- i want to style it with css, but in the html  -->
-<!-- i want to make it so that when you click on the rock paper or scissors it will show the result -->
 <html>
 
 <head>
@@ -10,14 +7,6 @@
     <title>Rock Paper Scissors</title>
     <link rel="stylesheet" href="RPS.css">
 </head>
-<!-- make the buttons to the center -->
-<!-- i want to make the body looks like: 3 buttons and 2 counters -->
-<!-- the 3 buttons: rock, paper, scissors -->
-<!-- the 2 counters: user points, computer points -->
-<!-- i want to make the buttons to be in the center -->
-<!-- the user chooses from the buttons directly, and the computer chooses from the buttons randomly -->
-<!-- when the user chose, a pop-up message should appear with what the computer chose, and what the user chose -->
-<!-- i want this code to be written using javascript -->
 <style>
     .container {
         display: flex;
@@ -94,8 +83,10 @@
         const scissors = document.getElementById('scissors');
         const user = document.getElementById('user');
         const computer = document.getElementById('computer');
+
         let userScore = 0;
         let computerScore = 0;
+
         rock.addEventListener('click', () => {
             const computerChoice = Math.floor(Math.random() * 3);
             if (computerChoice === 0) {
@@ -140,8 +131,5 @@
         });
     </script>
 </body>
-
-
-
 
 </html>

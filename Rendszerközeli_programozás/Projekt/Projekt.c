@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     printf("Az eloallitott darabszam: %d\n", Eloallitott_ertekek_DARAB);
 
     // Testing only BMP creatinon!
-    BMPcreator(Mert_ertekek_TOMB, Eloallitott_ertekek_DARAB);
+    // BMPcreator(Mert_ertekek_TOMB, Eloallitott_ertekek_DARAB);
     // End of testing
 
     //A jelenlegi folyamat pid-jének a megtalálása
@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
     //
     ReceiveViaFile(0);
     //
+
+    //Működik rendeltetés szerűen minden 03.31 20:50
     return EXIT_SUCCESS;
 }
 
