@@ -19,7 +19,8 @@ class Bag:
     #     print(self.adatok)
 
     def __str__(self): ##to_string metódus
-        return "{0}".format(self.adatok)
+        tmp="( "
+        for i in 
     
     def add_twice(self,i):
         for b in range(2):
