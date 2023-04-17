@@ -30,6 +30,7 @@ class Ellipse():
         return math.pi*self.A*self.B
     # Ellipse (ellipszis) osztályok megírása; a Sphere osztály esetén terheljük túl a következő operátorokat: <, <=, >, >= .
     
+    
     def __lt__(self, other):
         return self.Terület() < other.Terület()
     def __gt__(self, other):

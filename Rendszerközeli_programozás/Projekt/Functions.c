@@ -11,7 +11,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
-#include<signal.h>
+#include <signal.h>
+#include <math.h>
 
 int Measurement(int **Values)
 {
@@ -53,27 +54,27 @@ int Measurement(int **Values)
 
 int FindPID()
 {
-    FILE *f; // fájl
-    DIR *d; // mappa
+    FILE *f;              // fájl
+    DIR *d;               // mappa
     struct dirent *entry; // mappa bejárásához
-    int pid = 0; 
+    int pid = 0;
 
-    d = opendir("/proc/"); // mappa megnyitása
+    d = opendir("/proc/");               // mappa megnyitása
     while ((entry = readdir(d)) != NULL) // mappa bejárása
     {
         if ((*entry).d_name[0] != '.' && isdigit((*entry).d_name[0])) // ha nem . vagy .. és szám
         {
-            chdir("/proc/"); // mappába lép
-            chdir((*entry).d_name); // mappába lép
+            chdir("/proc/");          // mappába lép
+            chdir((*entry).d_name);   // mappába lép
             f = fopen("status", "r"); // megnyitja a status fájlt
-            char *line = NULL; // egy sor
-            size_t len = 0; // a line hossza
-            long read = 0; 
+            char *line = NULL;        // egy sor
+            size_t len = 0;           // a line hossza
+            long read = 0;
             while ((read = getline(&line, &len, f)) != -1) // read line by line from file
             {
                 if (strstr(line, "chart") != NULL)
                 {
-                    pid = atoi((*entry).d_name); //mappa nevét számmá alakítja
+                    pid = atoi((*entry).d_name); // mappa nevét számmá alakítja
                 }
             }
             fclose(f);
@@ -86,13 +87,13 @@ int FindPID()
 int idokezeles()
 {
     int result = 0;
-    struct tm *T; 
-    time_t T1; 
-    int T2; 
-    T2 = time(&T1); 
-    T = localtime(&T1); 
+    struct tm *T;
+    time_t T1;
+    int T2;
+    T2 = time(&T1);
+    T = localtime(&T1);
 
-    if (T->tm_min > 0 && T->tm_min < 15) 
+    if (T->tm_min > 0 && T->tm_min < 15)
     {
         result = (T->tm_min * 60) + T->tm_sec;
     }
@@ -118,16 +119,16 @@ int idokezeles()
 
 void BMPcreator(int *Values, int NumValues)
 {
-    int fd = open("valami.bmp", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    int fd = open("Measurements.bmp", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
     // kiszámítjuk a paddinget(azokat a 0-kat, amik szükségesek ahhoz, hogy osztható legyen maradéknélkül 32-vel)
     // condition ? ifTrue : ifFalse
-    int padded_values = NumValues % 32 == 0 ? 0 : NumValues + (32 - (NumValues % 32));
+    int padded_values = NumValues % 32 == 0 ? NumValues : NumValues + (32 - (NumValues % 32));
     printf("values: %d\n", NumValues);
     printf("padded values: %d\n", padded_values);
 
     // File Mérete 62=dib+header+rgb
-    int file_size = 62 + ((NumValues * padded_values) / 8); // soroknak
+    int file_size = 62 + ((NumValues * padded_values) / 8); // soroknak 8-al osztunk, mivel ezek bitek
     printf("The size of the file will be: %d B", file_size);
 
     // A tömbünk
@@ -173,14 +174,12 @@ void BMPcreator(int *Values, int NumValues)
     for (int i = 0; i < 4; i++)
     {
         unsigned int tmp = NumValues;
-        // unsigned int tmp=5000;
         header[i + 18] = (tmp >> i * 8) & 0b11111111;
     }
 
     // Image height in pixel 4 bytes little endian [22-25]
     for (int i = 0; i < 4; i++)
     {
-        // unsigned int tmp=5000;
         unsigned int tmp = NumValues;
         header[i + 22] = (tmp >> i * 8) & 0b11111111;
     }
@@ -238,64 +237,105 @@ void BMPcreator(int *Values, int NumValues)
     }
 
     // 0,102,204 r,g,b
-    header[54] = 204; // color 0:blue
-    header[55] = 102; // color 0: green
-    header[56] = 0;   // color 0:red
-    header[57] = 127; // color 0: alpha
+    header[54] = 200; // color 0:blue
+    header[55] = 200; // color 0: green
+    header[56] = 200; // color 0:red
+    header[57] = 0;   // color 0: alpha
 
     header[58] = 0; // color 1:blue
     header[59] = 0; // color 1:green
     header[60] = 0; // color 1:red
     header[61] = 0; // color 1:alpha
-    for (int i = 62; i < file_size; i++)
+
+    // header[62+((NumValues/2+SOR)*(padded_values/8)+OSZLOP)]=0b11111111;
+
+    // header[62 + ((NumValues / 2) * (padded_values / 8))] = 0b10000000;
+    // header[62 + ((NumValues / 2 + 1) * (padded_values / 8))] = 0b01000000;
+    // header[62 + ((NumValues / 2 + 2) * (padded_values / 8))] = 0b00100000;
+    // header[62 + ((NumValues / 2 + 3) * (padded_values / 8))] = 0b00010000;
+    // header[62 + ((NumValues / 2 + 4) * (padded_values / 8))] = 0b00001000;
+    // header[62 + ((NumValues / 2 + 5) * (padded_values / 8))] = 0b00000100;
+    // header[62 + ((NumValues / 2 + 6) * (padded_values / 8))] = 0b00000010;
+    // header[62 + ((NumValues / 2 + 7) * (padded_values / 8))] = 0b00000001;
+
+    // header[62 + ((NumValues / 2 + 8) * (padded_values / 8) + 1)] = 0b10000000;
+    // header[62 + ((NumValues / 2 + 9) * (padded_values / 8) + 1)] = 0b01000000;
+    // header[62+((NumValues/2)*(padded_values/8))]=
+
+    int Buffer_index[8];
+    unsigned int sum = 0;
+    int kulso_index = 0;
+
+    for (int i = 0; i < NumValues; i++)
     {
-        header[i] = 0;
+        Buffer_index[i % 8] = Values[i]; // Azért modulo 8 mivel, csak az első 8 elemre van szükségunk [0-7]
+
+        if (i % 8 == 7 || i == NumValues - 1) // Ellenőrzi, hogy 8 elemnél tartunk-e
+        {
+            for (int j = 0; j < 8; j++) // Az első ciklus, az elemenkénti ellenőrzéshez
+            {
+                sum = 0;                    // ebbe mentem el, hogy mennyit kellesz beiratni
+                for (int k = 0; k < 8; k++) // második ciklus, ez 8x8-szor fog lefutni
+                {
+                    if (Buffer_index[j] == Buffer_index[k]) // keresett elem megegyezik-e a aktuálisan nézett elemmel
+                    {
+                        sum += pow(2, 7 - k); // ha igen, akkor ellentétesen emelem hatványra a 2-őt
+                    }
+                }
+                header[62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)] = sum;
+                // beiratás, buffer_index[j]=Aktuális elem, a közepéhez képest mennyivel tér el.
+                // kulso_index=a bytokat adogatja hozzá sorban
+                // ezt egyenlővé tesszük az össze summázott értékkel
+            }
+            kulso_index++; // következő byte
+        }
     }
 
     write(fd, header, file_size);
-}
+    close(fd);
 
-void SendViaFile(int *Values, int NumValues)
-{
-    chdir(getenv("HOME"));
-    FILE *f;
-    f = fopen("Measurement.txt", "w");
-    for (int i = 0; i < NumValues; i++)
+    void SendViaFile(int *Values, int NumValues)
     {
-        fprintf(f,"%d\n", Values[i]);
+        chdir(getenv("HOME"));
+        FILE *f;
+        f = fopen("Measurement.txt", "w");
+        for (int i = 0; i < NumValues; i++)
+        {
+            fprintf(f, "%d\n", Values[i]);
+        }
+        fclose(f);
+        int Search = FindPID();
+        if (Search == -1)
+        {
+            fprintf(stderr, "nem talál fogadó üzemmódban működőfolyamatot");
+            exit(10);
+        }
+        else
+        {
+            kill(Search, SIGUSR1);
+        }
     }
-    fclose(f);
-    int Search = FindPID();
-    if (Search == -1)
-    {
-        fprintf(stderr, "nem talál fogadó üzemmódban működőfolyamatot");
-        exit(10);
-    }
-    else
-    {
-        kill(Search,SIGUSR1);
-    }
-}
 
-void ReceiveViaFile(int sig)
-{
-    const int MAX_BUFFER_SIZE=100; // buffer mérete
-    FILE *f; // fájlkezelő
-    chdir(getenv("HOME")); // home könyvtárba lépés
-    f = fopen("Measurement.txt", "r"); // fájl megnyitása olvasásra
-    char *buffer=malloc(MAX_BUFFER_SIZE*sizeof(char)); // buffer létrehozása
-    int *Values=malloc(1*sizeof(int)); // tömb létrehozása
-    int index=0; // index létrehozása
-
-    while (fgets(buffer,MAX_BUFFER_SIZE,f)!=NULL) // fájl beolvasása soronként és a bufferbe mentése
+    void ReceiveViaFile(int sig)
     {
-        // printf("%s",buffer);
-        Values[index]=atoi(buffer); // bufferből számot készítés
-        index++; // index növelése
-        Values=realloc(Values,(index+1)*sizeof(int)); // tömb átméretezése
-        printf("%d\n",Values[index-1]); // kiíratás
+        const int MAX_BUFFER_SIZE = 100;                       // buffer mérete
+        FILE *f;                                               // fájlkezelő
+        chdir(getenv("HOME"));                                 // home könyvtárba lépés
+        f = fopen("Measurement.txt", "r");                     // fájl megnyitása olvasásra
+        char *buffer = malloc(MAX_BUFFER_SIZE * sizeof(char)); // buffer létrehozása
+        int *Values = malloc(1 * sizeof(int));                 // tömb létrehozása
+        int index = 0;                                         // index létrehozása
+
+        while (fgets(buffer, MAX_BUFFER_SIZE, f) != NULL) // fájl beolvasása soronként és a bufferbe mentése
+        {
+            // printf("%s",buffer);
+            Values[index] = atoi(buffer);                        // bufferből számot készítés
+            index++;                                             // index növelése
+            Values = realloc(Values, (index + 1) * sizeof(int)); // tömb átméretezése
+            printf("%d\n", Values[index - 1]);                   // kiíratás
+        }
+        BMPcreator(Values, index); // BMP létrehozása
+        fclose(f);                 // fájl bezárása
+        free(buffer);              // buffer felszabadítása
     }
-    BMPcreator(Values,index); // BMP létrehozása
-    fclose(f); // fájl bezárása
-    free(buffer); // buffer felszabadítása
 }
