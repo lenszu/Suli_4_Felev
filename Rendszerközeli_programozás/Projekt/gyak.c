@@ -5,8 +5,7 @@
 
 int main()
 {
-    int *Mert_ertekek_TOMB;
-    int Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
-    printf("Az eloallitott darabszam: %d\n", Eloallitott_ertekek_DARAB);
-    BMPcreator(Mert_ertekek_TOMB,Eloallitott_ertekek_DARAB);
+    int pid = FindPID();
+    printf("%d", pid);
+    return 0;
 }

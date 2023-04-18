@@ -1,4 +1,4 @@
 target:
 		clear
-		gcc gyak.c Functions.c -lm
-		./a.out
+		gcc -o chart Functions.c Projekt.c -lm
+		

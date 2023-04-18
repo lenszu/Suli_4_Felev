@@ -27,7 +27,6 @@ int Measurement(int **Values)
         if (i == 0)
         {
             (*Values)[i] = 0;
-            printf("%d ", (*Values)[i]);
         }
         else
         {
@@ -46,7 +45,6 @@ int Measurement(int **Values)
             {
                 (*Values)[i] = tmp;
             }
-            printf("%d ", (*Values)[i]);
         }
     }
     return MERT_DARAB;
@@ -54,34 +52,39 @@ int Measurement(int **Values)
 
 int FindPID()
 {
-    FILE *f;              // fájl
-    DIR *d;               // mappa
-    struct dirent *entry; // mappa bejárásához
-    int pid = 0;
+    FILE *fp;               // fájl
+    DIR *d;                 // mappa
+    struct dirent *entry;   // mappa
+    int pid = 0;            // pid
+    char buff[1000];        // buffer
+    int own_pid = getpid(); // saját pid
+    d = opendir("/proc/");  // mappa megnyitása
 
-    d = opendir("/proc/");               // mappa megnyitása
     while ((entry = readdir(d)) != NULL) // mappa bejárása
     {
-        if ((*entry).d_name[0] != '.' && isdigit((*entry).d_name[0])) // ha nem . vagy .. és szám
+        if (isdigit(*(entry)->d_name)) // ha szám a fájl neve
         {
-            chdir("/proc/");          // mappába lép
-            chdir((*entry).d_name);   // mappába lép
-            f = fopen("status", "r"); // megnyitja a status fájlt
-            char *line = NULL;        // egy sor
-            size_t len = 0;           // a line hossza
-            long read = 0;
-            while ((read = getline(&line, &len, f)) != -1) // read line by line from file
+            sprintf(buff, "/proc/%s/status", entry->d_name); // fájl elérési útja
+            fp = fopen(buff, "r");                           // fájl megnyitása
+            fscanf(fp, "Name:\t%s\n", buff);                 // fájl beolvasása
+            if (strcmp(buff, "chart") == 0)                  // ha a fájl neve chart
             {
-                if (strstr(line, "chart") != NULL)
+                for (int i = 0; i < 4; i++) // 4 sor útugrása
                 {
-                    pid = atoi((*entry).d_name); // mappa nevét számmá alakítja
+                    fscanf(fp, "%[^\n]\n", buff); // üres sor beolvasása
+                }
+                fscanf(fp, "Pid:\t%d\n", &pid); // pid beolvasása
+                if (pid != own_pid)             // ha nem saját pid
+                {
+                    closedir(d); // mappa bezárása
+                    fclose(fp);  // fájl bezárása
+                    return pid;  // pid visszaadása
                 }
             }
-            fclose(f);
         }
     }
-    closedir(d); // mappa bezárása
-    return pid;
+    closedir(d);
+    return 1;
 }
 
 int idokezeles()
@@ -237,14 +240,14 @@ void BMPcreator(int *Values, int NumValues)
     }
 
     // 0,102,204 r,g,b
-    header[54] = 200; // color 0:blue
-    header[55] = 200; // color 0: green
-    header[56] = 200; // color 0:red
+    header[54] = 204; // color 0:blue
+    header[55] = 61; // color 0: green
+    header[56] = 81; // color 0:red
     header[57] = 0;   // color 0: alpha
 
-    header[58] = 0; // color 1:blue
-    header[59] = 0; // color 1:green
-    header[60] = 0; // color 1:red
+    header[58] = 21; // color 1:blue
+    header[59] = 150; // color 1:green
+    header[60] = 233; // color 1:red
     header[61] = 0; // color 1:alpha
 
     // header[62+((NumValues/2+SOR)*(padded_values/8)+OSZLOP)]=0b11111111;
@@ -263,7 +266,7 @@ void BMPcreator(int *Values, int NumValues)
     // header[62+((NumValues/2)*(padded_values/8))]=
 
     int Buffer_index[8];
-    unsigned int sum = 0;
+    int sum = 0;
     int kulso_index = 0;
 
     for (int i = 0; i < NumValues; i++)
@@ -292,50 +295,50 @@ void BMPcreator(int *Values, int NumValues)
     }
 
     write(fd, header, file_size);
+    free(header);
     close(fd);
+}
 
-    void SendViaFile(int *Values, int NumValues)
+void SendViaFile(int *Values, int NumValues)
+{
+    chdir(getenv("HOME"));
+    FILE *f;
+    f = fopen("Measurement.txt", "w");
+    for (int i = 0; i < NumValues; i++)
     {
-        chdir(getenv("HOME"));
-        FILE *f;
-        f = fopen("Measurement.txt", "w");
-        for (int i = 0; i < NumValues; i++)
-        {
-            fprintf(f, "%d\n", Values[i]);
-        }
-        fclose(f);
-        int Search = FindPID();
-        if (Search == -1)
-        {
-            fprintf(stderr, "nem talál fogadó üzemmódban működőfolyamatot");
-            exit(10);
-        }
-        else
-        {
-            kill(Search, SIGUSR1);
-        }
+        fprintf(f, "%d\n", Values[i]);
     }
-
-    void ReceiveViaFile(int sig)
+    fclose(f);
+    int Search = FindPID();
+    if (Search == -1)
     {
-        const int MAX_BUFFER_SIZE = 100;                       // buffer mérete
-        FILE *f;                                               // fájlkezelő
-        chdir(getenv("HOME"));                                 // home könyvtárba lépés
-        f = fopen("Measurement.txt", "r");                     // fájl megnyitása olvasásra
-        char *buffer = malloc(MAX_BUFFER_SIZE * sizeof(char)); // buffer létrehozása
-        int *Values = malloc(1 * sizeof(int));                 // tömb létrehozása
-        int index = 0;                                         // index létrehozása
-
-        while (fgets(buffer, MAX_BUFFER_SIZE, f) != NULL) // fájl beolvasása soronként és a bufferbe mentése
-        {
-            // printf("%s",buffer);
-            Values[index] = atoi(buffer);                        // bufferből számot készítés
-            index++;                                             // index növelése
-            Values = realloc(Values, (index + 1) * sizeof(int)); // tömb átméretezése
-            printf("%d\n", Values[index - 1]);                   // kiíratás
-        }
-        BMPcreator(Values, index); // BMP létrehozása
-        fclose(f);                 // fájl bezárása
-        free(buffer);              // buffer felszabadítása
+        fprintf(stderr, "nem talál fogadó üzemmódban működőfolyamatot");
+        exit(10);
     }
+    else
+    {
+        kill(Search, SIGUSR1);
+    }
+}
+
+void ReceiveViaFile(int sig)
+{
+    const int MAX_BUFFER_SIZE = 100;                       // buffer mérete
+    FILE *fda;                                             // fájlkezelő
+    chdir(getenv("HOME"));                                 // home könyvtárba lépés
+    fda = fopen("Measurement.txt", "r");                   // fájl megnyitása olvasásra
+    char *buffer = malloc(MAX_BUFFER_SIZE * sizeof(char)); // buffer létrehozása
+    int *Values = malloc(1 * sizeof(int));                 // tömb létrehozása
+    int index = 0;                                         // index létrehozása
+
+    while (fgets(buffer, MAX_BUFFER_SIZE, fda) != NULL) // fájl beolvasása soronként és a bufferbe mentése
+    {
+        Values[index] = atoi(buffer);                        // bufferből számot készítés
+        index++;                                             // index növelése
+        Values = realloc(Values, (index + 1) * sizeof(int)); // tömb átméretezése
+    }
+    BMPcreator(Values, index); // BMP létrehozása
+    free(buffer);              // buffer felszabadítása
+    free(Values);
+    fclose(fda);
 }

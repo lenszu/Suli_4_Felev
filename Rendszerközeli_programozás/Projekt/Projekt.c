@@ -11,9 +11,12 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <signal.h>
 
 int main(int argc, char *argv[])
 {
+    int *Mert_ertekek_TOMB;
+    int Eloallitott_ertekek_DARAB = 0;
     int version = 0, help = 0, send = 1, receive = 0, file = 1, socket = 0;
 
     if (strcmp(argv[0], "./chart") != 0)
@@ -61,12 +64,12 @@ int main(int argc, char *argv[])
     //----------------------------------------------
 
     // a program módjainak kiírására szolgáló ciklus
-    if (version==1)
+    if (version == 1)
     {
         printf("Verzio szam: 1.0\nElkeszitesi datum: 2023.02.14\nSzerzo: Lengyel Szilard Ferenc\n");
         return EXIT_SUCCESS;
     }
-    else if (help==1)
+    else if (help == 1)
     {
         printf("A program hasznalata:\n --version: paranccsal, lekerdezheto a program verzioszama, az elkeszitesi datum es a szerzo neve.\n --help: paranccsal, lekerdezheto a program hasznalata.\n-send vagy -receive paranccsal, valasztani lehet a program uzemmodjai kozott(def.: send).\n-file' vagy -socket paranccsal, valasztani lehet a program kommunikacios modjai kozott.(def.: file)\n");
         return EXIT_SUCCESS;
@@ -74,54 +77,43 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------
 
-    if (send==1)
+    if (send == 1)
     {
         printf("Send modban fut a program.\n");
     }
-    else if (receive==1)
+    else if (receive == 1)
     {
         printf("Receive modban fut a program.\n");
     }
 
     //----------------------------------------------
 
-    if (file==1)
+    if (file == 1)
     {
         printf("File a kommunikacios modban fut a program\n");
     }
-    else if (socket==1)
+    else if (socket == 1)
     {
         printf("Socket a kommunkacios modban fut a program\n");
     }
     //----------------------------------------------
 
-    // véletlen szám generálással, 0 val kezdodik, fel 1, le -1 vagy 0, egy tömbbe
-    // malloccal foglaljuk
+    ///////////////////////////////////////////////////////////////////
+    // KÜLDŐ ÉS FOGADÓ ÜZEMMÓDOK BEÁLLÍTÁSA:
+    if (file == 1 && send == 1)
+    {
+        Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
+        SendViaFile(&Mert_ertekek_TOMB[0], Eloallitott_ertekek_DARAB);
+        free(Mert_ertekek_TOMB);
+        return 0;
+    }
+    else if (receive == 1 && file == 1)
+    {
+        // készítsük fel a programot a SIGUSR1 jel fogadására, valamint, ha beérkezett a várt jel, akkor a ReceiveViaFile függvényt hívjuk meg
+        signal(SIGUSR1, ReceiveViaFile);
+        pause();
+    }
 
-    int *Mert_ertekek_TOMB;
-    int Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
-    puts("");
-    printf("Az eloallitott darabszam: %d\n", Eloallitott_ertekek_DARAB);
-
-    // Testing only BMP creatinon!
-    // BMPcreator(Mert_ertekek_TOMB, Eloallitott_ertekek_DARAB);
-    // End of testing
-
-    //A jelenlegi folyamat pid-jének a megtalálása
-    int I_Want_Pid=FindPID();
-    printf("A pid: %d\n",I_Want_Pid);
-    //eddig
-
-    //
-    SendViaFile(&Mert_ertekek_TOMB[0],Eloallitott_ertekek_DARAB);
-    //
-
-    //
-    // ReceiveViaFile(0);
-    //
-
-    //Működik rendeltetés szerűen minden 03.31 20:50
+    // Működik rendeltetés szerűen minden 03.31 20:50
     return EXIT_SUCCESS;
 }
-
-
