@@ -240,14 +240,14 @@ void BMPcreator(int *Values, int NumValues)
     }
 
     // 0,102,204 r,g,b
-    header[54] = 204; // color 0:blue
-    header[55] = 61; // color 0: green
-    header[56] = 81; // color 0:red
+    header[54] = 40; // color 0:blue
+    header[55] = 40; // color 0: green
+    header[56] = 40; // color 0:red
     header[57] = 0;   // color 0: alpha
 
-    header[58] = 21; // color 1:blue
-    header[59] = 150; // color 1:green
-    header[60] = 233; // color 1:red
+    header[58] = 0; // color 1:blue
+    header[59] = 165; // color 1:green
+    header[60] = 255; // color 1:red
     header[61] = 0; // color 1:alpha
 
     // header[62+((NumValues/2+SOR)*(padded_values/8)+OSZLOP)]=0b11111111;
