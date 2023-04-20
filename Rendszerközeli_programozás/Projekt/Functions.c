@@ -17,6 +17,102 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+void Mod_handling(int argc, char **argv, int **modes)
+{
+    *modes = calloc(4, sizeof(int));
+    // modes: 0 - is_send_mode, 1 - is_file_mode,
+    (*modes)[0] = 1; // def send mode
+    (*modes)[1] = 0; // receive mode
+    (*modes)[2] = 1; // def file mode
+    (*modes)[3] = 0; // socket mode
+
+    // validate program name
+    if (strcmp(argv[0], "./chart") != 0)
+    {
+        printf("HIBA! Rossz néven probalta futtatni a programot!.\n");
+        exit(1);
+    }
+
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "--version") == 0)
+        {
+            printf("Verzio: Sokadik ^^\nUtolso simitas: 2023.04.20\nKeszitette: Lengyel Szilard\n");
+            exit(1);
+        }
+        else if (strcmp(argv[i], "--help") == 0)
+        {
+            printf("Hasznalata: chart [OPTIONS]\n\n"
+                   "Options:\n"
+                   "  --version      A program verziószámáról ad részletesebb információt\n"
+                   "  --help         Elohivja ezt a segito uzenetet\n"
+                   "  -send          Kuldo uzemmodba valt (alapertelmezett)\n"
+                   "  -receive       Fogado uzemmodva valt\n"
+                   "  -file          Fileon keresztuli kommunikaciora valt (alapertelmezett)\n"
+                   "  -socket        Socketen keresztuli kommunikaciora valt (alapertelmezett)\n");
+            exit(2);
+        }
+        else if (strcmp(argv[i], "-send") == 0)
+        {
+            if ((*modes)[0] > 1)
+            {
+                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a SEND modot!\n");
+                exit(1);
+            }
+            (*modes)[0] += 1;
+        }
+        else if (strcmp(argv[i], "-receive") == 0)
+        {
+            if (!(*modes)[1] > 1)
+            {
+                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a RECEIVE modot!\n");
+                exit(1);
+            }
+            (*modes)[1] += 1;
+        }
+        else if (strcmp(argv[i], "-file") == 0)
+        {
+            if (!(*modes)[2] > 1)
+            {
+                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a FILE modot!\n");
+                exit(1);
+            }
+            (*modes)[2] += 1;
+        }
+        else if (strcmp(argv[i], "-socket") == 0)
+        {
+            if ((*modes)[3] > 1)
+            {
+                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a SOCKET modot!\n");
+                exit(1);
+            }
+            (*modes)[3] += 1;
+        }
+        else
+        {
+            printf("Hasznalata: chart [OPTIONS]\n\n"
+                   "Options:\n"
+                   "  --version      A program verziószámáról ad részletesebb információt\n"
+                   "  --help         Elohivja ezt a segito uzenetet\n"
+                   "  -send          Kuldo uzemmodba valt (alapertelmezett)\n"
+                   "  -receive       Fogado uzemmodva valt\n"
+                   "  -file          Fileon keresztuli kommunikaciora valt (alapertelmezett)\n"
+                   "  -socket        Socketen keresztuli kommunikaciora valt (alapertelmezett)\n");
+            exit(2);
+        }
+    }
+    if ((*modes)[0] > 1 && (*modes)[1] > 0)
+    {
+        printf("HIBA! Nem lehet egyszerre SEND es RECEIVE modban futtatni a programot!!\n");
+        exit(1);
+    }
+    if ((*modes)[2] > 1 && (*modes)[3] > 0)
+    {
+        printf("HIBA! Nem lehet egyszerre FILE es SOCKET modban futtatni a programot!!\n");
+        exit(1);
+    }
+}
+
 int Measurement(int **Values)
 {
     int MERT_DARAB = idokezeles();
@@ -58,7 +154,7 @@ int FindPID()
     FILE *fp;               // fájl
     DIR *d;                 // mappa
     struct dirent *entry;   // mappa
-    int pid = 0;            // pid
+    int pid = -1;           // pid
     char buff[1000];        // buffer
     int own_pid = getpid(); // saját pid
     d = opendir("/proc/");  // mappa megnyitása
@@ -87,7 +183,8 @@ int FindPID()
         }
     }
     closedir(d);
-    return 1;
+    fclose(fp);
+    return pid;
 }
 
 int idokezeles()
@@ -387,16 +484,15 @@ void SendViaSocket(int *Values, int NumValues)
         fprintf(stderr, "Az [1] kuldes nem sikerult.\n");
         exit(3);
     }
-
     /************************ Receive data **********************/
-
+    alarm(1);
     receive_bytes = recvfrom(s, &buffer_received, sizeof(int), flag, (struct sockaddr *)&server, &server_size);
     if (receive_bytes < 0)
     {
         fprintf(stderr, "Az [1] fogadas nem sikerult.\n");
         exit(4);
     }
-
+    alarm(0);
     if (bytes == receive_bytes)
     {
         /************************ Sending data **********************/
@@ -518,5 +614,23 @@ void ReceiveViaSocket()
         }
         BMPcreator(&Values[0], NumValues);
         free(Values);
+    }
+}
+
+void SignalHandler(int sig)
+{
+    if (sig == SIGINT)
+    {
+        printf("\nA program leall. \nViszlat!\n");
+        exit(0);
+    }
+    else if (sig == SIGUSR1)
+    {
+        fprintf(stderr, "HIBA! A fajlon keresztuli kuldes szolgaltatas nem elerheto!");
+    }
+    else if (sig == SIGALRM)
+    {
+        fprintf(stderr, "A szerver nem valaszol!");
+        exit(-1);
     }
 }

@@ -1,6 +1,8 @@
 #ifndef __FUNCTIONS__ /* Include guard */
 #define __FUNCTIONS__
 
+void Mod_handling(int argc, char **argv, int **modes);
+
 int idokezeles();
 
 int FindPID();
@@ -16,5 +18,7 @@ void ReceiveViaFile(int sig);
 void SendViaSocket(int *Values, int NumValues);
 
 void ReceiveViaSocket();
+
+void SignalHandler(int sig);
 
 #endif // FOO_H_
