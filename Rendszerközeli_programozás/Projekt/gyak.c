@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int main()
 {
-    int pid = FindPID();
-    printf("%d", pid);
-    return 0;
 }

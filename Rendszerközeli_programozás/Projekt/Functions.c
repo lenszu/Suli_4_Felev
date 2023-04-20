@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <math.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int Measurement(int **Values)
 {
@@ -122,7 +125,7 @@ int idokezeles()
 
 void BMPcreator(int *Values, int NumValues)
 {
-    int fd = open("Measurements.bmp", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    int fd = open("chart.bmp", O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
     // kiszámítjuk a paddinget(azokat a 0-kat, amik szükségesek ahhoz, hogy osztható legyen maradéknélkül 32-vel)
     // condition ? ifTrue : ifFalse
@@ -243,12 +246,12 @@ void BMPcreator(int *Values, int NumValues)
     header[54] = 40; // color 0:blue
     header[55] = 40; // color 0: green
     header[56] = 40; // color 0:red
-    header[57] = 0;   // color 0: alpha
+    header[57] = 0;  // color 0: alpha
 
-    header[58] = 0; // color 1:blue
+    header[58] = 0;   // color 1:blue
     header[59] = 165; // color 1:green
     header[60] = 255; // color 1:red
-    header[61] = 0; // color 1:alpha
+    header[61] = 0;   // color 1:alpha
 
     // header[62+((NumValues/2+SOR)*(padded_values/8)+OSZLOP)]=0b11111111;
 
@@ -325,6 +328,7 @@ void ReceiveViaFile(int sig)
 {
     const int MAX_BUFFER_SIZE = 100;                       // buffer mérete
     FILE *fda;                                             // fájlkezelő
+    char *pwd = getenv("PWD");                             // aktuális könyvtár
     chdir(getenv("HOME"));                                 // home könyvtárba lépés
     fda = fopen("Measurement.txt", "r");                   // fájl megnyitása olvasásra
     char *buffer = malloc(MAX_BUFFER_SIZE * sizeof(char)); // buffer létrehozása
@@ -337,8 +341,182 @@ void ReceiveViaFile(int sig)
         index++;                                             // index növelése
         Values = realloc(Values, (index + 1) * sizeof(int)); // tömb átméretezése
     }
+    chdir(pwd);                // vissza az eredeti könyvtárba
     BMPcreator(Values, index); // BMP létrehozása
     free(buffer);              // buffer felszabadítása
     free(Values);
     fclose(fda);
+}
+
+void SendViaSocket(int *Values, int NumValues)
+{
+    /************************ Declarations **********************/
+    int PORT_NO = 3333;        // Port Number
+    int s;                     // socket ID
+    int bytes;                 // received/sent bytes
+    int flag;                  // transmission flag
+    int receive_bytes;         // receive byte for talking
+    char on;                   // sockopt option
+    int buffer_received;       // received_int
+    unsigned int server_size;  // length of the sockaddr_in server
+    struct sockaddr_in server; // address of server
+
+    /************************ Initialization ********************/
+    on = 1;
+    flag = 0;
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_port = htons(PORT_NO);
+    server_size = sizeof server;
+
+    /************************ Creating socket *******************/
+    s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0)
+    {
+        fprintf(stderr, "Nem sikerult letrehozni a socketet.\n");
+        exit(2);
+    }
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+    setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on);
+
+    /************************ Sending data **********************/
+
+    bytes = sendto(s, &NumValues, sizeof(int), flag, (struct sockaddr *)&server, server_size);
+    if (bytes <= 0)
+    {
+        fprintf(stderr, "Az [1] kuldes nem sikerult.\n");
+        exit(3);
+    }
+
+    /************************ Receive data **********************/
+
+    receive_bytes = recvfrom(s, &buffer_received, sizeof(int), flag, (struct sockaddr *)&server, &server_size);
+    if (receive_bytes < 0)
+    {
+        fprintf(stderr, "Az [1] fogadas nem sikerult.\n");
+        exit(4);
+    }
+
+    if (bytes == receive_bytes)
+    {
+        /************************ Sending data **********************/
+
+        bytes = sendto(s, &Values[0], NumValues * sizeof(int), flag, (struct sockaddr *)&server, server_size);
+        if (bytes <= 0)
+        {
+            fprintf(stderr, "A [2] kuldes nem sikerult.\n");
+            exit(3);
+        }
+        /************************ Receive data **********************/
+
+        receive_bytes = recvfrom(s, &Values[0], sizeof(int) * NumValues, flag, (struct sockaddr *)&server, &server_size);
+        if (receive_bytes < 0)
+        {
+            fprintf(stderr, "A [2] fogadas nem sikerult.\n");
+            exit(4);
+        }
+
+        /// ha a [2] fogadott és küldött nem egyezik akkor itt majd le kellesz állnia úgyszint
+
+        if (bytes != receive_bytes)
+        {
+            fprintf(stderr, "HIBA! A [2] fogadas es kuldes merete nem egyezik meg!");
+            exit(419);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "HIBA! Az elkuldott, valamint a fogadott bajtok, nem egyeznek!");
+        exit(420);
+    }
+
+    /************************ Closing ***************************/
+    close(s);
+}
+
+void ReceiveViaSocket()
+{
+    /************************ Declarations **********************/
+    int s;
+    int bytes; // received/sent bytes
+    int err;   // error code
+    int flag;
+    int PORT_NO = 3333;        // transmission flag
+    char on;                   // sockopt option
+    int buffer;                // datagram buffer area
+    unsigned int server_size;  // length of the sockaddr_in server
+    unsigned int client_size;  // length of the sockaddr_in client
+    struct sockaddr_in server; // address of server
+    struct sockaddr_in client; // address of client
+
+    /************************ Initialization ********************/
+    on = 1;
+    flag = 0;
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(PORT_NO);
+    server_size = sizeof server;
+    client_size = sizeof client;
+
+    /************************ Creating socket *******************/
+    s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0)
+    {
+        fprintf(stderr, "Nem sikerult letrehozni a socketet.\n");
+        exit(2);
+    }
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+    setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on);
+
+    /************************ Binding socket ********************/
+    err = bind(s, (struct sockaddr *)&server, server_size);
+    if (err < 0)
+    {
+        fprintf(stderr, "Kapcsolodasi hiba\n");
+        exit(3);
+    }
+
+    while (1)
+    { // Continuous server operation
+        /************************ Receive data[1] **********************/
+        printf("\nVarom az uzenetet...\n");
+        // ITT ÉRKEZIK MEG A NUMVALUES
+        bytes = recvfrom(s, &buffer, sizeof(int), flag, (struct sockaddr *)&client, &client_size);
+        if (bytes < 0)
+        {
+            fprintf(stderr, "Az [1] fogadas nem sikerult.\n");
+            exit(4);
+        }
+
+        int *Values = malloc(sizeof(int) * buffer); // itt fogom tárolni a fogadott értékeket
+        int NumValues = buffer;                     // itt tárolom a fogadott értékeket
+        /************************ Sending data[1] **********************/
+        // visszaküldöm a fogadott adatokat
+        bytes = sendto(s, &NumValues, sizeof(int), flag, (struct sockaddr *)&client, client_size);
+        if (bytes <= 0)
+        {
+            fprintf(stderr, "Az [1] kuldes nem sikerult.\n");
+            exit(5);
+        }
+
+        /************************ Receive data[2] **********************/
+        // ITT ÉRKEZIK MEG A VALUES
+        bytes = recvfrom(s, &Values[0], NumValues * sizeof(int), flag, (struct sockaddr *)&client, &client_size);
+        if (bytes < 0)
+        {
+            fprintf(stderr, "Az [2] fogadas nem sikerult.\n");
+            exit(4);
+        }
+
+        /************************ Sending data[2] **********************/
+        // visszaküldöm a fogadott adatokat
+        bytes = sendto(s, &Values[0], sizeof(int) * NumValues, flag, (struct sockaddr *)&client, client_size);
+        if (bytes <= 0)
+        {
+            fprintf(stderr, "Az [2] kuldes nem sikerult.\n");
+            exit(5);
+        }
+        BMPcreator(&Values[0], NumValues);
+        free(Values);
+    }
 }

@@ -12,6 +12,9 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int main(int argc, char *argv[])
 {
@@ -112,6 +115,19 @@ int main(int argc, char *argv[])
         // készítsük fel a programot a SIGUSR1 jel fogadására, valamint, ha beérkezett a várt jel, akkor a ReceiveViaFile függvényt hívjuk meg
         signal(SIGUSR1, ReceiveViaFile);
         pause();
+    }
+
+    if (socket == 1 && send == 1)
+    {
+        Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
+        SendViaSocket(&Mert_ertekek_TOMB[0], Eloallitott_ertekek_DARAB);
+        free(Mert_ertekek_TOMB);
+        return 0;
+    }
+    else if (socket == 1 && receive == 1)
+    {
+        // készítsük fel a programot a SIGUSR1 jel fogadására, valamint, ha beérkezett a várt jel, akkor a ReceiveViaFile függvényt hívjuk meg
+        ReceiveViaSocket();
     }
 
     // Működik rendeltetés szerűen minden 03.31 20:50
