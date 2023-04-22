@@ -1,4 +1,4 @@
 target:
 		clear
-		gcc -o chart Functions.c Projekt.c -lm
+		gcc -o chart Functions.c Projekt.c -lm -fopenmp
 		

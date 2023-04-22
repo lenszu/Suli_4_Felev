@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <omp.h>
 
 void Mod_handling(int argc, char **argv, int **modes)
 {
@@ -37,7 +38,21 @@ void Mod_handling(int argc, char **argv, int **modes)
     {
         if (strcmp(argv[i], "--version") == 0)
         {
-            printf("Verzio: Sokadik ^^\nUtolso simitas: 2023.04.20\nKeszitette: Lengyel Szilard\n");
+            #pragma omp parallel sections
+            {
+                #pragma omp section
+                {
+                    printf("Verzio: Sokadik ^^\n");
+                }
+                #pragma omp section
+                {
+                    printf("Utolso simitas: 2023.04.20\n");
+                }
+                #pragma omp section
+                {
+                    printf("Keszitette: Lengyel Szilard\n");
+                }
+            }
             exit(1);
         }
         else if (strcmp(argv[i], "--help") == 0)

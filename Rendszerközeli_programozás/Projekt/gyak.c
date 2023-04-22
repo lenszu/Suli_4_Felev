@@ -1,30 +1,32 @@
-#include "Functions.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+/*** Example of parallel sections/threads ***/
+// gcc OpenMP1.c -fopenmp
 
-void vissza(int **argv, int size)
-{
-    (*argv) = calloc(6, sizeof(int));
-    (*argv)[0]=6;
-    for (int i = 0; i < size; i++)
+#include<stdio.h>
+#include<omp.h>
+
+int main(){
+  #pragma omp parallel sections
     {
-        printf("%d ", (*argv)[i]);
+    #pragma omp section
+      {
+      printf("Algeria  (%d).\n",omp_get_thread_num());
+      }
+    #pragma omp section
+      {
+      printf("Bulgaria (%d).\n",omp_get_thread_num());
+      }
+    #pragma omp section
+      {
+      printf("Croatia  (%d).\n",omp_get_thread_num());
+      }
+    #pragma omp section
+      {
+      printf("Dominica (%d).\n",omp_get_thread_num());
+      }
+    #pragma omp section
+      {
+      printf("Ethiopia (%d).\n",omp_get_thread_num());
+      }
     }
-    printf("\n A merete: %d\n", size);
-}
-
-int main(int argc, char *argv[])
-{
-    int *Mert_ertekek_TOMB;
-    int merete = 6;
-    vissza(&Mert_ertekek_TOMB, merete);
-    // for (int i = 0; i < merete; i++)
-    // {
-    //     printf("%d ",Mert_ertekek_TOMB[i]);
-    // }
-    free(Mert_ertekek_TOMB);
-}
+  return 0;
+  }
