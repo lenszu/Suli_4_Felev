@@ -1,32 +1,31 @@
-/*** Example of parallel sections/threads ***/
-// gcc OpenMP1.c -fopenmp
+#include "Functions.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <math.h>
+#include <stdbool.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <math.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <omp.h>
 
-#include<stdio.h>
-#include<omp.h>
-
-int main(){
-  #pragma omp parallel sections
-    {
-    #pragma omp section
-      {
-      printf("Algeria  (%d).\n",omp_get_thread_num());
-      }
-    #pragma omp section
-      {
-      printf("Bulgaria (%d).\n",omp_get_thread_num());
-      }
-    #pragma omp section
-      {
-      printf("Croatia  (%d).\n",omp_get_thread_num());
-      }
-    #pragma omp section
-      {
-      printf("Dominica (%d).\n",omp_get_thread_num());
-      }
-    #pragma omp section
-      {
-      printf("Ethiopia (%d).\n",omp_get_thread_num());
-      }
-    }
-  return 0;
+int main()
+{
+  int *tomb = calloc(50, sizeof(int));
+  for (int i = 0; i > -50; i--)
+  {
+    tomb[i*-1]=i;
   }
+  BMPcreator(tomb, 50);
+  // free(tomb);
+  return 0;
+}
