@@ -20,12 +20,12 @@
 
 int main()
 {
-  int *tomb = calloc(50, sizeof(int));
-  for (int i = 0; i > -50; i--)
+  int *tomb = malloc(8 * sizeof(int));
+  for (int i = 0; i < 8; i++)
   {
-    tomb[i*-1]=i;
+    tomb[i] = i;
   }
-  BMPcreator(tomb, 50);
-  // free(tomb);
+  BMPcreator(tomb, 8);
+
   return 0;
 }

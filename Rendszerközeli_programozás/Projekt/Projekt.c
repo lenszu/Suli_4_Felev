@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 {
     signal(SIGINT, SignalHandler);
     signal(SIGUSR1, SignalHandler);
+
     int *Uzemmodok;
     int *Mert_ertekek_TOMB;
     int Eloallitott_ertekek_DARAB = 0;
@@ -52,6 +53,7 @@ int main(int argc, char *argv[])
         // készítsük fel a programot a SIGUSR1 jel fogadására, valamint, ha beérkezett a várt jel, akkor a ReceiveViaFile függvényt hívjuk meg
         while (1)
         {
+            printf("Varom a fileon keresztuli uzenetet...");
             signal(SIGUSR1, ReceiveViaFile);
             pause();
         }

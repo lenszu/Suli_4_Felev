@@ -145,12 +145,12 @@ int Measurement(int **Values)
         else
         {
             rf = (double)rand() / ((unsigned)RAND_MAX + 1); // 0.0 <= y < 1.0
-            if (rf <= 0.428571)
+            if (rf <= 0.428571)                             // 0.428571
             {
                 tmp = tmp + 1;
                 (*Values)[i] = tmp;
             }
-            else if (rf > 0.428571 && rf <= 0.783409)
+            if (rf > 0.428571 && rf <= 0.783409) // rf > 0.428571 && rf <= 0.783409
             {
                 tmp = tmp - 1;
                 (*Values)[i] = tmp;
@@ -384,56 +384,68 @@ void BMPcreator(int *Values, int NumValues)
     // header[62 + ((NumValues - 1) * (padded_values / 8) + NumValues / 16)] = 0b11111111; // legfelso sor
     // header[62 + ((NumValues - 1) * (padded_values / 8) + NumValues / 8)] = 0b11111111;
     // header[62 + ((NumValues / 2) * (padded_values / 8))] = 0b11111111;
-    header[62 + NumValues / 16] = 0b11111111; // legalso
-    header[62] = 0b11111111;                  // legalso
-    header[62+NumValues/8];
+    // header[62 + NumValues / 16] = 0b11111111; // legalso
+    // header[62] = 0b11111111; // legalso
+    // header[62 + ((NumValues / 2) * (padded_values / 8))] = 0b11111111;
 
     int Buffer_index[8];
     int sum = 0;
     int kulso_index = 0;
-    int tmp = 0;
-    // for (int i = 0; i < NumValues; i++)
-    // {
-    //     Buffer_index[i % 8] = Values[i]; // Azért modulo 8 mivel, csak az első 8 elemre van szükségunk [0-7]
 
-    //     if (i % 8 == 7 || i == NumValues - 1) // Ellenőrzi, hogy 8 elemnél tartunk-e
-    //     {
-    //         for (int j = 0; j < (i % 8) + 1; j++) // Az első ciklus, az elemenkénti ellenőrzéshez
-    //         {
-    //             sum = 0;                              // ebbe mentem el, hogy mennyit kellesz beiratni
-    //             for (int k = 0; k < (i % 8) + 1; k++) // második ciklus, ez 8x8-szor fog lefutni
-    //             {
-    //                 if (Buffer_index[j] == Buffer_index[k]) // keresett elem megegyezik-e a aktuálisan nézett elemmel
-    //                 {
-    //                     sum += pow(2, 7 - k); // ha igen, akkor ellentétesen emelem hatványra a 2-őt
-    //                 }
-    //             }
+    for (int i = 0; i < NumValues; i++)
+    {
+        Buffer_index[i % 8] = Values[i]; // Azért modulo 8 mivel, csak az első 8 elemre van szükségunk [0-7]
 
-    //             ///////////////////////////////////////////////////////////////////////////////////////////////
-    //             if ((62 + ((NumValues - 1) * (padded_values / 8)) < 62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)) && (62 + ((NumValues - 1) * (padded_values / 8) + NumValues / 8) < 62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)))
-    //             {
-    //                 printf("Magas\n");
-    //                 header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum; // teteje
-    //             }
-    //             else if ((62 + ((padded_values / 8)) < 62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)) && (62 +((padded_values / 8)+NumValues/8) < 62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)))
-    //             {
-    //                 printf("alacsony");
-    //                 header[62 + ((padded_values / 8)) + kulso_index] = sum; // alja
-    //             }
-    //             else
-    //             {
-    //                 tmp++;
-    //                 printf("%d\n", tmp);
-    //                 header[62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)] = sum;
-    //             }
+        if (i % 8 == 7 || i == NumValues - 1) // Ellenőrzi, hogy 8 elemnél tartunk-e
+        {
+            for (int j = 0; j < (i % 8) + 1; j++) // Az első ciklus, az elemenkénti ellenőrzéshez
+            {
+                sum = 0;
+                for (int k = 0; k < (i % 8) + 1; k++) // második ciklus, ez 8x8-szor fog lefutni
+                {
+                    if (Buffer_index[j] >= NumValues / 2)
+                    {
+                        for (int l = j; l < 8; l++)
+                        {
+                            Buffer_index[l] = NumValues / 2;
+                        }
+                    }
+                    if (Buffer_index[j] <= (NumValues / 2) * -1)
+                    {
+                        for (int l = j; l < 8; l++)
+                        {
+                            Buffer_index[l] = (NumValues / 2) * -1;
+                        }
+                    }
+                    if ((Buffer_index[j] == Buffer_index[k])) // keresett elem megegyezik-e a aktuálisan nézett elemmel
+                    {
+                        sum += pow(2, 7 - k); // ha igen, akkor ellentétesen emelem hatványra a 2-őt
+                    }
+                }
 
-    //             // beiratás, buffer_index[j]=Aktuális elem, a közepéhez képest mennyivel tér el.
-    //             // kulso_index=a bytokat adogatja hozzá sorban
-    //             // ezt egyenlővé tesszük az össze summázott értékkel
-    //         }
-    //         kulso_index++; // következő byte
-    //     }
-    // }
+                ///////////////////////////////////////////////////////////////////////////////////////////////
+                if (Buffer_index[j] >= NumValues / 2)
+                {
+                    header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum;
+                    // header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum; // teteje
+                }
+                else if (Buffer_index[j] <= ((NumValues / 2) * -1))
+                {
+
+                    header[62 + kulso_index] = sum; // alja
+                }
+                else
+                {
+                    header[62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)] = sum;
+                }
+
+                // beiratás, buffer_index[j]=Aktuális elem, a közepéhez képest mennyivel tér el.
+                // kulso_index=a bytokat adogatja hozzá sorban
+                // ezt egyenlővé tesszük az össze summázott értékkel
+            }
+            kulso_index++; // következő byte
+        }
+    }
 
     write(fd, header, file_size);
     free(header);
@@ -481,7 +493,8 @@ void ReceiveViaFile(int sig)
     }
     chdir(pwd);                // vissza az eredeti könyvtárba
     BMPcreator(Values, index); // BMP létrehozása
-    free(buffer);              // buffer felszabadítása
+    printf("Megkaptam az uzenetet. :)");
+    free(buffer); // buffer felszabadítása
     free(Values);
     fclose(fda);
 }
@@ -668,6 +681,7 @@ void SignalHandler(int sig)
     else if (sig == SIGUSR1)
     {
         fprintf(stderr, "HIBA! A fajlon keresztuli kuldes szolgaltatas nem elerheto!");
+        exit(1);
     }
     else if (sig == SIGALRM)
     {
