@@ -21,16 +21,15 @@
 void Mod_handling(int argc, char **argv, int **modes)
 {
     *modes = calloc(4, sizeof(int));
-    // modes: 0 - is_send_mode, 1 - is_file_mode,
+
     (*modes)[0] = 1; // def send mode
     (*modes)[1] = 0; // receive mode
     (*modes)[2] = 1; // def file mode
     (*modes)[3] = 0; // socket mode
 
-    // validate program name
     if (strcmp(argv[0], "./chart") != 0)
     {
-        printf("HIBA! Rossz néven probalta futtatni a programot!.\n");
+        printf("HIBA! Rossz neven probalta futtatni a programot!.\n");
         exit(1);
     }
 
@@ -46,60 +45,60 @@ void Mod_handling(int argc, char **argv, int **modes)
                 }
 #pragma omp section
                 {
-                    printf("Utolso simitas: 2023.04.20\n");
+                    printf("Utolso simitas: 2023.04.25\n");
                 }
 #pragma omp section
                 {
                     printf("Keszitette: Lengyel Szilard\n");
                 }
             }
-            exit(1);
+            exit(425 % 255);
         }
         else if (strcmp(argv[i], "--help") == 0)
         {
-            printf("Hasznalata: chart [OPTIONS]\n\n"
+            printf("Hasznalata: ./chart [OPTIONS]\n\n"
                    "Options:\n"
-                   "  --version      A program verziószámáról ad részletesebb információt\n"
-                   "  --help         Elohivja ezt a segito uzenetet\n"
-                   "  -send          Kuldo uzemmodba valt (alapertelmezett)\n"
-                   "  -receive       Fogado uzemmodva valt\n"
-                   "  -file          Fileon keresztuli kommunikaciora valt (alapertelmezett)\n"
-                   "  -socket        Socketen keresztuli kommunikaciora valt (alapertelmezett)\n");
-            exit(2);
+                   "  --version      A program verziószámáról ad részletesebb információt.\n"
+                   "  --help         Elohivja ezt a segito uzenetet.\n"
+                   "  -send          Kuldo uzemmodba valt (alapertelmezett).\n"
+                   "  -receive       Fogado uzemmodva valt.\n"
+                   "  -file          Fileon keresztuli kommunikaciora valt. (alapertelmezett)\n"
+                   "  -socket        Socketen keresztuli kommunikaciora valt.\n");
+            exit(0);
         }
         else if (strcmp(argv[i], "-send") == 0)
         {
             if ((*modes)[0] > 1)
             {
-                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a SEND modot!\n");
-                exit(1);
+                printf("HIBA! Nem lehet egyszerre ketszer hasznalni a SEND modot!\n");
+                exit(2);
             }
             (*modes)[0] += 1;
         }
         else if (strcmp(argv[i], "-receive") == 0)
         {
-            if (!(*modes)[1] > 1)
+            if ((*modes)[1] > 0)
             {
-                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a RECEIVE modot!\n");
-                exit(1);
+                printf("HIBA! Nem lehet egyszerre ketszer hasznalni a RECEIVE modot!\n");
+                exit(2);
             }
             (*modes)[1] += 1;
         }
         else if (strcmp(argv[i], "-file") == 0)
         {
-            if (!(*modes)[2] > 1)
+            if ((*modes)[2] > 1)
             {
-                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a FILE modot!\n");
-                exit(1);
+                printf("HIBA! Nem lehet egyszerre ketszer hasznalni a FILE modot!\n");
+                exit(2);
             }
             (*modes)[2] += 1;
         }
         else if (strcmp(argv[i], "-socket") == 0)
         {
-            if ((*modes)[3] > 1)
+            if ((*modes)[3] > 0)
             {
-                printf("HIBA! Nem lehet egyszerre ketszer hasznlani a SOCKET modot!\n");
-                exit(1);
+                printf("HIBA! Nem lehet egyszerre ketszer hasznalni a SOCKET modot!\n");
+                exit(2);
             }
             (*modes)[3] += 1;
         }
@@ -119,12 +118,12 @@ void Mod_handling(int argc, char **argv, int **modes)
     if ((*modes)[0] > 1 && (*modes)[1] > 0)
     {
         printf("HIBA! Nem lehet egyszerre SEND es RECEIVE modban futtatni a programot!!\n");
-        exit(1);
+        exit(2);
     }
     if ((*modes)[2] > 1 && (*modes)[3] > 0)
     {
         printf("HIBA! Nem lehet egyszerre FILE es SOCKET modban futtatni a programot!!\n");
-        exit(1);
+        exit(2);
     }
 }
 
@@ -150,7 +149,7 @@ int Measurement(int **Values)
                 tmp = tmp + 1;
                 (*Values)[i] = tmp;
             }
-            if (rf > 0.428571 && rf <= 0.783409) // rf > 0.428571 && rf <= 0.783409
+            else if (rf > 0.428571 && rf <= 0.7834097) // rf > 0.428571 && rf <= 0.783409
             {
                 tmp = tmp - 1;
                 (*Values)[i] = tmp;
@@ -187,12 +186,11 @@ int FindPID()
                 {
                     fscanf(fp, "%[^\n]\n", buff); // üres sor beolvasása
                 }
-                fscanf(fp, "Pid:\t%d\n", &pid); // pid beolvasása
-                if (pid != own_pid)             // ha nem saját pid
+                int tmp = 0;
+                fscanf(fp, "Pid:\t%d\n", &tmp); // pid beolvasása
+                if (tmp != own_pid)             // ha nem saját pid
                 {
-                    closedir(d); // mappa bezárása
-                    fclose(fp);  // fájl bezárása
-                    return pid;  // pid visszaadása
+                    pid = tmp; // pid beállítása
                 }
             }
         }
@@ -242,14 +240,14 @@ void BMPcreator(int *Values, int NumValues)
     // kiszámítjuk a paddinget(azokat a 0-kat, amik szükségesek ahhoz, hogy osztható legyen maradéknélkül 32-vel)
     // condition ? ifTrue : ifFalse
     int padded_values = NumValues % 32 == 0 ? NumValues : NumValues + (32 - (NumValues % 32));
-    printf("values: %d\n", NumValues);
+    printf("\nvalues: %d\n", NumValues);
     printf("padded values: %d\n", padded_values);
 
     // File Mérete 62=dib+header+rgb
-    int file_size = 62 + ((NumValues * padded_values) / 8); // soroknak 8-al osztunk, mivel ezek bitek
+    int file_size = 62 + ((NumValues * padded_values) / 8); // sorokat 8-al osztunk, mivel ezek bitek
     printf("The size of the file will be: %d B", file_size);
 
-    // A tömbünk
+    // A bufferunk
     unsigned char *header = calloc(file_size, sizeof(char));
     puts("");
 
@@ -367,19 +365,6 @@ void BMPcreator(int *Values, int NumValues)
 
     // header[62+((NumValues/2+SOR)*(padded_values/8)+OSZLOP)]=0b11111111;
 
-    // header[62 + ((NumValues / 2) * (padded_values / 8))] = 0b10000000;
-    // header[62 + ((NumValues / 2 + 1) * (padded_values / 8))] = 0b01000000;
-    // header[62 + ((NumValues / 2 + 2) * (padded_values / 8))] = 0b00100000;
-    // header[62 + ((NumValues / 2 + 3) * (padded_values / 8))] = 0b00010000;
-    // header[62 + ((NumValues / 2 + 4) * (padded_values / 8))] = 0b00001000;
-    // header[62 + ((NumValues / 2 + 5) * (padded_values / 8))] = 0b00000100;
-    // header[62 + ((NumValues / 2 + 6) * (padded_values / 8))] = 0b00000010;
-    // header[62 + ((NumValues / 2 + 7) * (padded_values / 8))] = 0b00000001;
-
-    // header[62 + ((NumValues / 2 + 8) * (padded_values / 8) + 1)] = 0b10000000;
-    // header[62 + ((NumValues / 2 + 9) * (padded_values / 8) + 1)] = 0b01000000;
-    // header[62+((NumValues/2)*(padded_values/8))]=
-
     // header[62 + ((NumValues - 1) * (padded_values / 8)+)] = 0b11111111;                  // legfelso sor
     // header[62 + ((NumValues - 1) * (padded_values / 8) + NumValues / 16)] = 0b11111111; // legfelso sor
     // header[62 + ((NumValues - 1) * (padded_values / 8) + NumValues / 8)] = 0b11111111;
@@ -396,25 +381,25 @@ void BMPcreator(int *Values, int NumValues)
     {
         Buffer_index[i % 8] = Values[i]; // Azért modulo 8 mivel, csak az első 8 elemre van szükségunk [0-7]
 
-        if (i % 8 == 7 || i == NumValues - 1) // Ellenőrzi, hogy 8 elemnél tartunk-e
+        if (i % 8 == 7 || i == NumValues - 1) // Ellenőrzi, hogy 8 elemnél tartunk-e, vagy a tomb vegehez ertunk
         {
             for (int j = 0; j < (i % 8) + 1; j++) // Az első ciklus, az elemenkénti ellenőrzéshez
             {
                 sum = 0;
                 for (int k = 0; k < (i % 8) + 1; k++) // második ciklus, ez 8x8-szor fog lefutni
                 {
-                    if (Buffer_index[j] >= NumValues / 2)
+                    if (Buffer_index[j] >= NumValues / 2) // ha a keresett elem nagyobb mint a kozepetol szamitott magassag fele
                     {
-                        for (int l = j; l < 8; l++)
+                        for (int l = j; l < 8; l++) // akkor a keresett elemet a kozepetol szamitott magassag felere allitom
                         {
-                            Buffer_index[l] = NumValues / 2;
+                            Buffer_index[l] = NumValues / 2; // es a maradek elemeket is
                         }
                     }
-                    if (Buffer_index[j] <= (NumValues / 2) * -1)
+                    if (Buffer_index[j] <= (NumValues / 2) * -1) // ha a keresett elem kisebb mint a kozepetol szamitott magassag fele
                     {
-                        for (int l = j; l < 8; l++)
+                        for (int l = j; l < 8; l++) // akkor a keresett elemet a kozepetol szamitott magassag felere allitom
                         {
-                            Buffer_index[l] = (NumValues / 2) * -1;
+                            Buffer_index[l] = (NumValues / 2) * -1; // es a maradek elemeket is
                         }
                     }
                     if ((Buffer_index[j] == Buffer_index[k])) // keresett elem megegyezik-e a aktuálisan nézett elemmel
@@ -424,19 +409,18 @@ void BMPcreator(int *Values, int NumValues)
                 }
 
                 ///////////////////////////////////////////////////////////////////////////////////////////////
-                if (Buffer_index[j] >= NumValues / 2)
+                if (Buffer_index[j] >= NumValues / 2) // felulre megyunk
                 {
-                    header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum;
-                    // header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum; // teteje
+                    header[62 + ((NumValues - 1) * (padded_values / 8) + kulso_index)] = sum; // teteje
                 }
-                else if (Buffer_index[j] <= ((NumValues / 2) * -1))
+                else if (Buffer_index[j] <= ((NumValues / 2) * -1)) // alulra
                 {
 
                     header[62 + kulso_index] = sum; // alja
                 }
                 else
                 {
-                    header[62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)] = sum;
+                    header[62 + ((NumValues / 2 + Buffer_index[j]) * (padded_values / 8) + kulso_index)] = sum; // közep
                 }
 
                 // beiratás, buffer_index[j]=Aktuális elem, a közepéhez képest mennyivel tér el.
@@ -465,8 +449,8 @@ void SendViaFile(int *Values, int NumValues)
     int Search = FindPID();
     if (Search == -1)
     {
-        fprintf(stderr, "nem talál fogadó üzemmódban működőfolyamatot");
-        exit(10);
+        fprintf(stderr, "HIBA! A program nem talál fogadó üzemmódban működő folyamatot");
+        exit(3);
     }
     else
     {
@@ -493,14 +477,15 @@ void ReceiveViaFile(int sig)
     }
     chdir(pwd);                // vissza az eredeti könyvtárba
     BMPcreator(Values, index); // BMP létrehozása
-    printf("Megkaptam az uzenetet. :)");
-    free(buffer); // buffer felszabadítása
+    free(buffer);              // buffer felszabadítása
     free(Values);
     fclose(fda);
 }
 
 void SendViaSocket(int *Values, int NumValues)
 {
+    signal(SIGALRM, SignalHandler);
+
     /************************ Declarations **********************/
     int PORT_NO = 3333;        // Port Number
     int s;                     // socket ID
@@ -524,8 +509,8 @@ void SendViaSocket(int *Values, int NumValues)
     s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0)
     {
-        fprintf(stderr, "Nem sikerult letrehozni a socketet.\n");
-        exit(2);
+        fprintf(stderr, "Nem sikerult letrehozni a socketet.[SEND] [SOCKET]\n");
+        exit(4);
     }
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
     setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on);
@@ -535,16 +520,16 @@ void SendViaSocket(int *Values, int NumValues)
     bytes = sendto(s, &NumValues, sizeof(int), flag, (struct sockaddr *)&server, server_size);
     if (bytes <= 0)
     {
-        fprintf(stderr, "Az [1] kuldes nem sikerult.\n");
-        exit(3);
+        fprintf(stderr, "Az [1] kuldes nem sikerult. [SEND] [SOCKET]\n");
+        exit(5);
     }
     /************************ Receive data **********************/
     alarm(1);
     receive_bytes = recvfrom(s, &buffer_received, sizeof(int), flag, (struct sockaddr *)&server, &server_size);
     if (receive_bytes < 0)
     {
-        fprintf(stderr, "Az [1] fogadas nem sikerult.\n");
-        exit(4);
+        fprintf(stderr, "Az [1] fogadas nem sikerult. [SEND] [SOCKET]\n");
+        exit(6);
     }
     alarm(0);
     if (bytes == receive_bytes)
@@ -554,30 +539,29 @@ void SendViaSocket(int *Values, int NumValues)
         bytes = sendto(s, &Values[0], NumValues * sizeof(int), flag, (struct sockaddr *)&server, server_size);
         if (bytes <= 0)
         {
-            fprintf(stderr, "A [2] kuldes nem sikerult.\n");
-            exit(3);
+            fprintf(stderr, "A [2] kuldes nem sikerult. [SEND] [SOCKET]\n");
+            exit(5);
         }
         /************************ Receive data **********************/
-
-        receive_bytes = recvfrom(s, &Values[0], sizeof(int) * NumValues, flag, (struct sockaddr *)&server, &server_size);
-        if (receive_bytes < 0)
+        int tomb_merete_Byte = 0;
+        receive_bytes = recvfrom(s, &tomb_merete_Byte, sizeof(int), flag, (struct sockaddr *)&server, &server_size);
+        if (receive_bytes <= 0)
         {
-            fprintf(stderr, "A [2] fogadas nem sikerult.\n");
-            exit(4);
+            fprintf(stderr, "A [2] fogadas nem sikerult. [SEND] [SOCKET]\n");
+            exit(6);
         }
 
-        /// ha a [2] fogadott és küldött nem egyezik akkor itt majd le kellesz állnia úgyszint
-
-        if (bytes != receive_bytes)
+        if (tomb_merete_Byte != NumValues * sizeof(int))
         {
-            fprintf(stderr, "HIBA! A [2] fogadas es kuldes merete nem egyezik meg!");
-            exit(419);
+            printf("%d\n%d\n", receive_bytes, buffer_received);
+            fprintf(stderr, "HIBA! A [2] fogadas es kuldes merete nem egyezik meg! [SEND] [SOCKET]");
+            exit(7);
         }
     }
     else
     {
-        fprintf(stderr, "HIBA! Az elkuldott, valamint a fogadott bajtok, nem egyeznek!");
-        exit(420);
+        fprintf(stderr, "HIBA! A [1] fogadas es kuldes merete nem egyezik meg! [SEND] [SOCKET]");
+        exit(7);
     }
 
     /************************ Closing ***************************/
@@ -612,8 +596,8 @@ void ReceiveViaSocket()
     s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0)
     {
-        fprintf(stderr, "Nem sikerult letrehozni a socketet.\n");
-        exit(2);
+        fprintf(stderr, "Nem sikerult letrehozni a socketet. [RECEIVE] [SOCKET]\n");
+        exit(4);
     }
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
     setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof on);
@@ -622,8 +606,8 @@ void ReceiveViaSocket()
     err = bind(s, (struct sockaddr *)&server, server_size);
     if (err < 0)
     {
-        fprintf(stderr, "Kapcsolodasi hiba\n");
-        exit(3);
+        fprintf(stderr, "Kapcsolodasi hiba [RECEIVE] [SOCKET]\n");
+        exit(8);
     }
 
     while (1)
@@ -634,8 +618,8 @@ void ReceiveViaSocket()
         bytes = recvfrom(s, &buffer, sizeof(int), flag, (struct sockaddr *)&client, &client_size);
         if (bytes < 0)
         {
-            fprintf(stderr, "Az [1] fogadas nem sikerult.\n");
-            exit(4);
+            fprintf(stderr, "Az [1] fogadas nem sikerult. [RECEIVE] [SOCKET]\n");
+            exit(6);
         }
 
         int *Values = malloc(sizeof(int) * buffer); // itt fogom tárolni a fogadott értékeket
@@ -645,7 +629,7 @@ void ReceiveViaSocket()
         bytes = sendto(s, &NumValues, sizeof(int), flag, (struct sockaddr *)&client, client_size);
         if (bytes <= 0)
         {
-            fprintf(stderr, "Az [1] kuldes nem sikerult.\n");
+            fprintf(stderr, "Az [1] kuldes nem sikerult. [RECEIVE] [SOCKET]\n");
             exit(5);
         }
 
@@ -654,16 +638,17 @@ void ReceiveViaSocket()
         bytes = recvfrom(s, &Values[0], NumValues * sizeof(int), flag, (struct sockaddr *)&client, &client_size);
         if (bytes < 0)
         {
-            fprintf(stderr, "Az [2] fogadas nem sikerult.\n");
-            exit(4);
+            fprintf(stderr, "Az [2] fogadas nem sikerult. [RECEIVE] [SOCKET]\n");
+            exit(6);
         }
 
         /************************ Sending data[2] **********************/
         // visszaküldöm a fogadott adatokat
-        bytes = sendto(s, &Values[0], sizeof(int) * NumValues, flag, (struct sockaddr *)&client, client_size);
+        int tomb_merete_Byte = sizeof(int) * NumValues;
+        bytes = sendto(s, &tomb_merete_Byte, sizeof(int), flag, (struct sockaddr *)&client, client_size);
         if (bytes <= 0)
         {
-            fprintf(stderr, "Az [2] kuldes nem sikerult.\n");
+            fprintf(stderr, "Az [2] kuldes nem sikerult. [RECEIVE] [SOCKET]\n");
             exit(5);
         }
         BMPcreator(&Values[0], NumValues);
@@ -681,11 +666,11 @@ void SignalHandler(int sig)
     else if (sig == SIGUSR1)
     {
         fprintf(stderr, "HIBA! A fajlon keresztuli kuldes szolgaltatas nem elerheto!");
-        exit(1);
+        exit(9);
     }
     else if (sig == SIGALRM)
     {
         fprintf(stderr, "A szerver nem valaszol!");
-        exit(-1);
+        exit(10);
     }
 }

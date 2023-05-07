@@ -1,4 +1,3 @@
-#include "Functions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,14 +17,18 @@
 #include <arpa/inet.h>
 #include <omp.h>
 
-int main()
+int main(int argc, char *argv[], char *env[])
 {
-  int *tomb = malloc(8 * sizeof(int));
-  for (int i = 0; i < 8; i++)
-  {
-    tomb[i] = i;
-  }
-  BMPcreator(tomb, 8);
-
-  return 0;
+    int be = open("proc2.bmp", O_RDWR);
+    int length = 66;
+    unsigned char *buffer = malloc(length);
+    read(be, buffer, length);
+    // 0, 44 , 105
+    for (int i = 54; i < 66; i++)
+    {
+        // printf("%d\n", buffer[i]);
+        buffer[i] = 0b00000010;
+    }
+    write(be, buffer, length);
+    close(be);
 }

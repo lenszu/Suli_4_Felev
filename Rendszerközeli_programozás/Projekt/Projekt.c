@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
         Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
         SendViaSocket(&Mert_ertekek_TOMB[0], Eloallitott_ertekek_DARAB);
         free(Mert_ertekek_TOMB);
+        free(Uzemmodok);
         return 0;
     }
     else if (Uzemmodok[1] == 1 && Uzemmodok[2] >= 1) // receive - file
@@ -53,7 +54,6 @@ int main(int argc, char *argv[])
         // készítsük fel a programot a SIGUSR1 jel fogadására, valamint, ha beérkezett a várt jel, akkor a ReceiveViaFile függvényt hívjuk meg
         while (1)
         {
-            printf("Varom a fileon keresztuli uzenetet...");
             signal(SIGUSR1, ReceiveViaFile);
             pause();
         }
@@ -63,9 +63,10 @@ int main(int argc, char *argv[])
         Eloallitott_ertekek_DARAB = Measurement(&Mert_ertekek_TOMB);
         SendViaFile(&Mert_ertekek_TOMB[0], Eloallitott_ertekek_DARAB);
         free(Mert_ertekek_TOMB);
+        free(Uzemmodok);
         return 0;
     }
 
     free(Uzemmodok);
-    return EXIT_SUCCESS;
+    return 0;
 }
