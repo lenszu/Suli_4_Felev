@@ -1,0 +1,62 @@
+[
+    {
+        "name": "Aranys",
+        "class": "Paladin",
+        "level": 58
+    },
+    {
+        "name": "Kaedron",
+        "class": "Druid",
+        "level": 42
+    },
+    {
+        "name": "Nelthis",
+        "class": "Hunter",
+        "level": 27
+    },
+    {
+        "name": "Tyrthas",
+        "class": "Mage",
+        "level": 53
+    },
+    {
+        "name": "Aeloria",
+        "class": "Warrior",
+        "level": 47
+    },
+    {
+        "name": "Firion",
+        "class": "Rogue",
+        "level": 38
+    },
+    {
+        "name": "Belac",
+        "class": "Warlock",
+        "level": 59
+    },
+    {
+        "name": "Sylarin",
+        "class": "Priest",
+        "level": 60
+    },
+    {
+        "name": "Drostan",
+        "class": "Shaman",
+        "level": 30
+    },
+    {
+        "name": "Erevan",
+        "class": "Monk",
+        "level": 24
+    },
+    {
+        "name": "Zalathar",
+        "class": "Death Knight",
+        "level": 60
+    },
+    {
+        "name": "Kethryll",
+        "class": "Demon Hunter",
+        "level": 11
+    }
+]
